@@ -1,4 +1,9 @@
-import { defineConfig } from "@Lovable.dev/vite-tanstack-config";
+import { defineConfig } from "vite";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import viteReact from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import { nitro } from "nitro/vite";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 const STATIC = process.env["STATIC_BUILD"] === "true";
 
@@ -6,35 +11,41 @@ const rawBase = process.env["BASE_PATH"] ?? "/";
 const base = rawBase.endsWith("/") ? rawBase : `${rawBase}/`;
 
 export default defineConfig({
-  // Render / Node production server
-  ...(!STATIC
-    ? {
-        nitro: {
-          preset: "node-server",
-        },
-      }
-    : {
-        nitro: false as const,
-      }),
+  base,
 
-  tanstackStart: {
-    ...(!STATIC
-      ? {
-          server: {
-            entry: "server" as const,
-          },
-        }
-      : {
-          spa: {
-            enabled: true,
-          },
-          prerender: {
-            enabled: true,
-          },
-        }),
-  },
+  plugins: [
+    ...(STATIC
+      ? []
+      : [
+          tanstackStart({
+            server: {
+              entry: "server",
+            },
+          }),
+          nitro({
+            preset: "node-server",
+          }),
+        ]),
 
-  vite: {
-    base,
+    ...(STATIC
+      ? [
+          tanstackStart({
+            spa: {
+              enabled: true,
+            },
+            prerender: {
+              enabled: true,
+            },
+          }),
+        ]
+      : []),
+
+    tailwindcss(),
+    tsconfigPaths(),
+    viteReact(),
+  ],
+
+  server: {
+    host: "0.0.0.0",
   },
 });
