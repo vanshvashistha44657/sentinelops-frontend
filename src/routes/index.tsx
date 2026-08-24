@@ -74,6 +74,11 @@ function LoginPage() {
     }
   };
 
+  const ADMIN_EMAILS = [
+    ADMIN_EMAIL,
+    "adi1tyasingh2004@gmail.com",
+  ];
+
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
       {/* Brand panel */}
@@ -150,7 +155,13 @@ function LoginPage() {
               <Label htmlFor="email">Work e-mail</Label>
               <div className="relative">
                 <Mail className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                <Input id="email" autoComplete="email" className="pl-8" placeholder="analyst@sentinelops.io" {...form.register("email")} />
+                <Input
+                  id="email"
+                  autoComplete="email"
+                  className="pl-8"
+                  placeholder="analyst@sentinelops.io"
+                  {...form.register("email")}
+                />
               </div>
               {form.formState.errors.email && (
                 <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
@@ -214,7 +225,15 @@ function LoginPage() {
               <p className="text-xs font-semibold text-foreground">Administrator account</p>
               <Chip tone="info">RBAC</Chip>
             </div>
-            <p className="mono mt-1 break-all text-[11px] text-muted-foreground">{ADMIN_EMAIL}</p>
+
+            <div className="mono mt-1 space-y-0.5 text-[11px] text-muted-foreground">
+              {ADMIN_EMAILS.map((email) => (
+                <p key={email} className="break-all">
+                  {email}
+                </p>
+              ))}
+            </div>
+
             <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
               The administrator credential is provisioned through secure server-side configuration
               (ADMIN_EMAIL / ADMIN_PASSWORD) and is never stored, displayed or shipped in client code.
