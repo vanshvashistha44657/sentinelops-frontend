@@ -155,7 +155,7 @@ ADMIN_PASSWORD
 
 The administrator account is:
 
-ADMIN_EMAIL = vanshvashistha44657@gmail.com
+ADMIN_EMAIL = vanshvashistha44657@gmail.com & adi1tyasingh2004@gmail.com
 
 The supplied administrator password must NEVER be displayed in the UI, committed to source code, or exposed through client-side JavaScript.
 
