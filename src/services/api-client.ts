@@ -34,6 +34,12 @@ export function setAccessToken(token: string | null) {
   else window.localStorage.removeItem(TOKEN_KEY);
 }
 
+function notifySessionExpired() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("sentinelops:session-expired"));
+  }
+}
+
 function messageFor(status: number) {
   switch (status) {
     case 400:
@@ -57,28 +63,51 @@ function messageFor(status: number) {
   }
 }
 
-export async function apiFetch<T>(
-  path: string,
-  init: RequestInit = {},
-): Promise<T> {
+export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!IS_LIVE_BACKEND) {
     throw new ApiError(503, "No backend configured (VITE_API_BASE_URL is empty).");
   }
 
-  const token = getAccessToken();
-  let res: Response;
+  const request = async () => {
+    const token = getAccessToken();
+    try {
+      return await fetch(`${API_BASE_URL}${path}`, {
+        ...init,
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(init.headers ?? {}),
+        },
+      });
+    } catch {
+      throw new ApiError(0, "Network failure — the SentinelOps backend is unreachable.");
+    }
+  };
 
-  try {
-    res = await fetch(`${API_BASE_URL}${path}`, {
-      ...init,
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...(init.headers ?? {}),
-      },
-    });
-  } catch {
-    throw new ApiError(0, "Network failure — the SentinelOps backend is unreachable.");
+  let res = await request();
+  const shouldRefresh =
+    res.status === 401 &&
+    !path.startsWith("/auth/login") &&
+    !path.startsWith("/auth/refresh") &&
+    !path.startsWith("/auth/register");
+  if (shouldRefresh && getAccessToken()) {
+    try {
+      const refreshed = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (refreshed.ok) {
+        const body = (await refreshed.json()) as { token?: string };
+        if (body.token) {
+          setAccessToken(body.token);
+          res = await request();
+        }
+      }
+    } catch {
+      // The original 401 remains authoritative below.
+    }
   }
 
   if (!res.ok) {
@@ -87,6 +116,10 @@ export async function apiFetch<T>(
       detail = await res.json();
     } catch {
       detail = undefined;
+    }
+    if (res.status === 401 && getAccessToken()) {
+      setAccessToken(null);
+      notifySessionExpired();
     }
     throw new ApiError(statusFromResponse(res.status, detail), messageFor(res.status), detail);
   }
@@ -99,10 +132,7 @@ function statusFromResponse(status: number, _detail: unknown) {
   return status;
 }
 
-export async function apiFetchBlob(
-  path: string,
-  init: RequestInit = {},
-): Promise<Blob> {
+export async function apiFetchBlob(path: string, init: RequestInit = {}): Promise<Blob> {
   if (!IS_LIVE_BACKEND) {
     throw new ApiError(503, "No backend configured (VITE_API_BASE_URL is empty).");
   }
@@ -113,6 +143,7 @@ export async function apiFetchBlob(
   try {
     res = await fetch(`${API_BASE_URL}${path}`, {
       ...init,
+      credentials: "include",
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(init.headers ?? {}),

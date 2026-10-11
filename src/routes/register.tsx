@@ -21,7 +21,11 @@ export const Route = createFileRoute("/register")({
           "Request an analyst account for the SentinelOps SOC/XDR platform. All registrations require administrator approval before access is granted.",
       },
       { property: "og:title", content: "Request SOC Access — SentinelOps" },
-      { property: "og:description", content: "Analyst account requests are reviewed and approved by a SentinelOps administrator." },
+      {
+        property: "og:description",
+        content:
+          "Analyst account requests are reviewed and approved by a SentinelOps administrator.",
+      },
     ],
   }),
   component: RegisterPage,
@@ -44,7 +48,10 @@ const schema = z
     password: strong,
     confirm: z.string(),
   })
-  .refine((v) => v.password === v.confirm, { path: ["confirm"], message: "Passwords do not match" });
+  .refine((v) => v.password === v.confirm, {
+    path: ["confirm"],
+    message: "Passwords do not match",
+  });
 
 type Values = z.infer<typeof schema>;
 
@@ -63,7 +70,14 @@ function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const form = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", email: "", department: "", justification: "", password: "", confirm: "" },
+    defaultValues: {
+      name: "",
+      email: "",
+      department: "",
+      justification: "",
+      password: "",
+      confirm: "",
+    },
   });
   const pw = form.watch("password");
   const score = strength(pw);
@@ -72,7 +86,13 @@ function RegisterPage() {
   const onSubmit = async (values: Values) => {
     setError(null);
     try {
-      await services.auth.register({ name: values.name, email: values.email, password: values.password });
+      await services.auth.register({
+        name: values.name,
+        email: values.email,
+        password: values.password,
+        department: values.department,
+        justification: values.justification,
+      });
       toast.success("Access request submitted for administrator review");
       void navigate({ to: "/pending-approval" });
     } catch (e) {
@@ -88,15 +108,17 @@ function RegisterPage() {
         </span>
         <div>
           <p className="text-base font-semibold">SentinelOps</p>
-          <p className="mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">SOC access request</p>
+          <p className="mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+            SOC access request
+          </p>
         </div>
       </div>
 
       <div className="panel p-6">
         <h1 className="text-xl font-semibold tracking-tight">Request analyst access</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          New accounts are created in a <strong className="text-medium">pending</strong> state and remain unable to sign
-          in until an administrator approves the request and assigns a role.
+          New accounts are created in a <strong className="text-medium">pending</strong> state and
+          remain unable to sign in until an administrator approves the request and assigns a role.
         </p>
 
         {error && (
@@ -109,43 +131,72 @@ function RegisterPage() {
           <div className="space-y-1.5">
             <Label htmlFor="name">Full name</Label>
             <Input id="name" {...form.register("name")} placeholder="Jane Okafor" />
-            {form.formState.errors.name && <p className="text-xs text-destructive">{form.formState.errors.name.message}</p>}
+            {form.formState.errors.name && (
+              <p className="text-xs text-destructive">{form.formState.errors.name.message}</p>
+            )}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="department">Department</Label>
-            <Input id="department" {...form.register("department")} placeholder="Security Operations" />
+            <Input
+              id="department"
+              {...form.register("department")}
+              placeholder="Security Operations"
+            />
             {form.formState.errors.department && (
               <p className="text-xs text-destructive">{form.formState.errors.department.message}</p>
             )}
           </div>
           <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="email">Work e-mail</Label>
-            <Input id="email" type="email" {...form.register("email")} placeholder="jane.okafor@company.com" />
+            <Input
+              id="email"
+              type="email"
+              {...form.register("email")}
+              placeholder="jane.okafor@company.com"
+            />
             {form.formState.errors.email && (
               <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
             )}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" autoComplete="new-password" {...form.register("password")} />
+            <Input
+              id="password"
+              type="password"
+              autoComplete="new-password"
+              {...form.register("password")}
+            />
             <div className="flex gap-1">
               {[0, 1, 2, 3, 4].map((i) => (
                 <span
                   key={i}
                   className={`h-1 flex-1 rounded-full ${
-                    i < score ? (score <= 2 ? "bg-critical" : score === 3 ? "bg-medium" : "bg-success") : "bg-muted"
+                    i < score
+                      ? score <= 2
+                        ? "bg-critical"
+                        : score === 3
+                          ? "bg-medium"
+                          : "bg-success"
+                      : "bg-muted"
                   }`}
                 />
               ))}
             </div>
-            <p className="text-[11px] text-muted-foreground">{pw ? labels[Math.max(0, score - 1)] : "Minimum 10 chars, mixed case, number, symbol"}</p>
+            <p className="text-[11px] text-muted-foreground">
+              {pw ? labels[Math.max(0, score - 1)] : "Minimum 10 chars, mixed case, number, symbol"}
+            </p>
             {form.formState.errors.password && (
               <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
             )}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="confirm">Confirm password</Label>
-            <Input id="confirm" type="password" autoComplete="new-password" {...form.register("confirm")} />
+            <Input
+              id="confirm"
+              type="password"
+              autoComplete="new-password"
+              {...form.register("confirm")}
+            />
             {form.formState.errors.confirm && (
               <p className="text-xs text-destructive">{form.formState.errors.confirm.message}</p>
             )}
@@ -160,7 +211,9 @@ function RegisterPage() {
               {...form.register("justification")}
             />
             {form.formState.errors.justification && (
-              <p className="text-xs text-destructive">{form.formState.errors.justification.message}</p>
+              <p className="text-xs text-destructive">
+                {form.formState.errors.justification.message}
+              </p>
             )}
           </div>
 

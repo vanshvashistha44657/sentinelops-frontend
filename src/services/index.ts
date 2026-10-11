@@ -68,13 +68,9 @@ function setDataMode(next: DataMode) {
   modeListeners.forEach((fn) => fn(next));
 }
 
-/** Statuses that mean "this endpoint cannot serve us", not "you are denied". */
-const FALLBACK_STATUSES = [0, 404, 405, 501, 502, 503, 504];
-
 /**
- * Try the live backend; fall back to the seeded dataset when it is unreachable
- * or the endpoint is not implemented yet. Authentication and authorisation
- * failures (401/403/422) always propagate — they are real answers.
+ * Use the live backend whenever configured. Authentication, authorization,
+ * validation, missing-resource and server errors remain visible to the UI.
  */
 async function resolve<T>(path: string, fallback: () => T, init?: RequestInit): Promise<T> {
   if (!IS_LIVE_BACKEND) return demo(fallback);
@@ -83,10 +79,8 @@ async function resolve<T>(path: string, fallback: () => T, init?: RequestInit): 
     setDataMode("live");
     return result;
   } catch (error) {
-    const status = error instanceof ApiError ? error.status : -1;
-    if (!FALLBACK_STATUSES.includes(status)) throw error;
     setDataMode("degraded");
-    return demo(fallback);
+    throw error;
   }
 }
 
@@ -128,7 +122,13 @@ const ROLE_PERMISSIONS: Record<Role, string[]> = {
     "reports:write",
     "settings:write",
   ],
-  "SOC Analyst L2": ["alerts:write", "incidents:write", "cases:write", "iocs:write", "reports:write"],
+  "SOC Analyst L2": [
+    "alerts:write",
+    "incidents:write",
+    "cases:write",
+    "iocs:write",
+    "reports:write",
+  ],
   "SOC Analyst L1": ["alerts:write"],
 };
 
@@ -146,50 +146,51 @@ export const ADMIN_EMAIL: string =
   (import.meta.env["VITE_ADMIN_EMAIL"] as string | undefined) ?? "vanshvashistha44657@gmail.com";
 
 const auth = {
-  async login({ email, password }: LoginPayload): Promise<{ user: AuthUser; token: string }> {
+  async login({
+    email,
+    password,
+    remember,
+  }: LoginPayload): Promise<{ user: AuthUser; token: string }> {
     if (IS_LIVE_BACKEND) {
-      try {
-        const res = await apiFetch<{
-          token: string;
-          user: User & {
-            approved?: boolean;
-            status?: string;
-          };
-        }>("/auth/login", {
-          method: "POST",
-          body: JSON.stringify({ email, password }),
-        });
-
-        setDataMode("live");
-
-        const backendRole = String(res.user.role).toLowerCase();
-        const normalizedRole: Role =
-          backendRole === "admin" || backendRole === "administrator"
-            ? "Administrator"
-            : backendRole === "user"
-              ? "SOC Analyst L1"
-              : (res.user.role as Role);
-
-        const normalizedStatus =
-          res.user.status ??
-          (res.user.approved === true ? "active" : "pending");
-
-        const user: User = {
-          ...res.user,
-          role: normalizedRole,
-          status: normalizedStatus as User["status"],
-          lastLogin: new Date().toISOString(),
+      const res = await apiFetch<{
+        token: string;
+        user: User & {
+          approved?: boolean;
+          status?: string;
         };
+      }>("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password, remember }),
+      });
 
-        return {
-          token: res.token,
-          user: { ...user, permissions: permissionsFor(normalizedRole) },
-        };
-      } catch (error) {
-        // Authentication must never silently fall back to demo credentials
-        // when a live backend is configured. A live backend error is real.
-        throw error;
-      }
+      setDataMode("live");
+
+      const backendRole = String(res.user.role).toLowerCase();
+      const normalizedRole: Role =
+        backendRole === "admin" || backendRole === "administrator"
+          ? "Administrator"
+          : backendRole === "manager" || backendRole === "soc manager"
+            ? "SOC Manager"
+            : backendRole === "analyst_l2" || backendRole === "soc analyst l2"
+              ? "SOC Analyst L2"
+              : backendRole === "user"
+                ? "SOC Analyst L1"
+                : (res.user.role as Role);
+
+      const normalizedStatus =
+        res.user.status ?? (res.user.approved === true ? "active" : "pending");
+
+      const user: User = {
+        ...res.user,
+        role: normalizedRole,
+        status: normalizedStatus as User["status"],
+        lastLogin: new Date().toISOString(),
+      };
+
+      return {
+        token: res.token,
+        user: { ...user, permissions: permissionsFor(normalizedRole) },
+      };
     }
     // DEMO MODE: credentials are never validated client-side against a stored
     // secret. Any known account with a non-trivial password is accepted so the
@@ -204,11 +205,21 @@ const auth = {
     if (known.status === "disabled") throw new ApiError(403, "This account has been disabled.");
     return {
       token: `demo.${btoa(known.id)}.session`,
-      user: { ...known, lastLogin: new Date().toISOString(), permissions: permissionsFor(known.role) },
+      user: {
+        ...known,
+        lastLogin: new Date().toISOString(),
+        permissions: permissionsFor(known.role),
+      },
     };
   },
 
-  async register(input: { name: string; email: string; password: string }): Promise<User> {
+  async register(input: {
+    name: string;
+    email: string;
+    password: string;
+    department?: string;
+    justification?: string;
+  }): Promise<User> {
     if (IS_LIVE_BACKEND) {
       const res = await apiFetch<{
         message: string;
@@ -225,7 +236,7 @@ const auth = {
       } as User;
     }
     const created: User = {
-      id: `usr-${Math.floor(1000 + Date.now() % 9000)}`,
+      id: `usr-${Math.floor(1000 + (Date.now() % 9000))}`,
       name: input.name,
       email: input.email,
       role: "SOC Analyst L1",
@@ -241,11 +252,10 @@ const auth = {
   },
 
   async requestPasswordReset(email: string) {
-    return resolve<{ ok: true }>(
-      "/auth/forgot-password",
-      () => ({ ok: true }),
-      { method: "POST", body: JSON.stringify({ email }) },
-    );
+    return resolve<{ ok: true }>("/auth/forgot-password", () => ({ ok: true }), {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
   },
 
   async changePassword(input: { current: string; next: string }) {
@@ -284,15 +294,18 @@ const auth = {
   },
 
   async revokeSession(id: string) {
-    return resolve<{ ok: true }>(`/auth/sessions/${id}`, () => {
-      mutateDataset((d) => {
-        d.sessions = d.sessions.filter((s) => s.id !== id);
-      });
-      return { ok: true };
-    }, { method: "DELETE" });
+    return resolve<{ ok: true }>(
+      `/auth/sessions/${id}`,
+      () => {
+        mutateDataset((d) => {
+          d.sessions = d.sessions.filter((s) => s.id !== id);
+        });
+        return { ok: true };
+      },
+      { method: "DELETE" },
+    );
   },
 };
-
 
 /* ------------------------------------------------------------- dashboard */
 
@@ -347,7 +360,8 @@ const alerts = {
             return false;
           if (filters.search) {
             const q = filters.search.toLowerCase();
-            const hay = `${a.id} ${a.rule} ${a.host} ${a.sourceIp} ${a.destinationIp} ${a.user} ${a.mitreTechnique} ${a.assignee ?? ""}`.toLowerCase();
+            const hay =
+              `${a.id} ${a.rule} ${a.host} ${a.sourceIp} ${a.destinationIp} ${a.user} ${a.mitreTechnique} ${a.assignee ?? ""}`.toLowerCase();
             if (!hay.includes(q)) return false;
           }
           return true;
@@ -400,7 +414,12 @@ const alerts = {
           const a = d.alerts.find((x) => x.id === id);
           if (a) {
             a.notes = [
-              { id: `n-${Date.now()}`, author: "Current analyst", body, createdAt: new Date().toISOString() },
+              {
+                id: `n-${Date.now()}`,
+                author: "Current analyst",
+                body,
+                createdAt: new Date().toISOString(),
+              },
               ...a.notes,
             ];
             updated = a;
@@ -420,7 +439,9 @@ const incidents = {
   list(search = ""): Promise<Incident[]> {
     return resolve(`/incidents?search=${encodeURIComponent(search)}`, () =>
       getDemoDataset().incidents.filter((i) =>
-        `${i.id} ${i.title} ${i.assignee ?? ""} ${i.status}`.toLowerCase().includes(search.toLowerCase()),
+        `${i.id} ${i.title} ${i.assignee ?? ""} ${i.status}`
+          .toLowerCase()
+          .includes(search.toLowerCase()),
       ),
     );
   },
@@ -544,7 +565,12 @@ const cases = {
           evidence: [],
           notes: [],
           timeline: [
-            { id: `tl-${Date.now()}`, at: new Date().toISOString(), actor: "Current analyst", action: "Case opened" },
+            {
+              id: `tl-${Date.now()}`,
+              at: new Date().toISOString(),
+              actor: "Current analyst",
+              action: "Case opened",
+            },
           ],
           attachments: [],
         };
@@ -613,7 +639,13 @@ const iocs = {
       return found;
     });
   },
-  create(input: { type: Ioc["type"]; value: string; source: string; tags: string[]; riskScore: number }) {
+  create(input: {
+    type: Ioc["type"];
+    value: string;
+    source: string;
+    tags: string[];
+    riskScore: number;
+  }) {
     return resolve<Ioc>(
       "/iocs",
       () => {
@@ -621,7 +653,14 @@ const iocs = {
         const created: Ioc = {
           id: `IOC-${7100 + d.iocs.length}`,
           ...input,
-          severity: input.riskScore > 85 ? "critical" : input.riskScore > 65 ? "high" : input.riskScore > 45 ? "medium" : "low",
+          severity:
+            input.riskScore > 85
+              ? "critical"
+              : input.riskScore > 65
+                ? "high"
+                : input.riskScore > 45
+                  ? "medium"
+                  : "low",
           firstSeen: new Date().toISOString(),
           lastSeen: new Date().toISOString(),
           matches: 0,
@@ -700,7 +739,8 @@ const hunting = {
         return getDemoDataset().huntResults.filter((r) => {
           if (now - new Date(r.timestamp).getTime() > query.hours * 3600_000) return false;
           if (!v) return true;
-          const hay = `${r.host} ${r.user} ${r.process} ${r.commandLine} ${r.sourceIp} ${r.destinationIp} ${r.mitre}`.toLowerCase();
+          const hay =
+            `${r.host} ${r.user} ${r.process} ${r.commandLine} ${r.sourceIp} ${r.destinationIp} ${r.mitre}`.toLowerCase();
           return query.operator === "not_contains" ? !hay.includes(v) : hay.includes(v);
         });
       },
@@ -734,7 +774,9 @@ const assets = {
   list(search = ""): Promise<Asset[]> {
     return resolve(`/assets?search=${encodeURIComponent(search)}`, () =>
       getDemoDataset().assets.filter((a) =>
-        `${a.id} ${a.name} ${a.os} ${a.owner} ${a.ip} ${a.type}`.toLowerCase().includes(search.toLowerCase()),
+        `${a.id} ${a.name} ${a.os} ${a.owner} ${a.ip} ${a.type}`
+          .toLowerCase()
+          .includes(search.toLowerCase()),
       ),
     );
   },
@@ -876,12 +918,15 @@ const admin = {
 
     return rows.map((u) => ({
       ...u,
-      role:
-        ["admin", "administrator"].includes(String(u.role).toLowerCase())
-          ? "Administrator"
-          : String(u.role).toLowerCase() === "user"
-            ? "SOC Analyst L1"
-            : (u.role as Role),
+      role: ["admin", "administrator"].includes(String(u.role).toLowerCase())
+        ? "Administrator"
+        : ["manager", "soc manager"].includes(String(u.role).toLowerCase())
+          ? "SOC Manager"
+          : ["analyst_l2", "soc analyst l2"].includes(String(u.role).toLowerCase())
+            ? "SOC Analyst L2"
+            : String(u.role).toLowerCase() === "user"
+              ? "SOC Analyst L1"
+              : (u.role as Role),
       status: u.approved === true ? "active" : "pending",
       lastLogin: u.lastLogin ?? null,
     })) as User[];
@@ -917,10 +962,7 @@ const admin = {
       return admin.users();
     }
 
-    throw new ApiError(
-      400,
-      "This production backend currently supports account approval only.",
-    );
+    throw new ApiError(400, "This production backend currently supports account approval only.");
   },
   auditLogs(search = ""): Promise<AuditLog[]> {
     return resolve(`/admin/audit-logs?search=${encodeURIComponent(search)}`, () =>
