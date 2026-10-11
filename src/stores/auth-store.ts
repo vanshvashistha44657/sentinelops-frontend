@@ -63,9 +63,9 @@ if (typeof window !== "undefined") {
   if (useAuthStore.persist.hasHydrated()) markHydrated();
   useAuthStore.persist.onFinishHydration(() => markHydrated());
   void Promise.resolve().then(markHydrated);
+  window.addEventListener("sentinelops:session-expired", () => useAuthStore.getState().expire());
 }
 
 export function useCurrentUser() {
   return useAuthStore((s) => s.user);
 }
-

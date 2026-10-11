@@ -6,7 +6,7 @@
  * emits clearly-labelled DEMO events. Both use the same event shape, so the UI
  * never changes when the backend arrives.
  */
-import { API_BASE_URL, IS_LIVE_BACKEND } from "./api-client";
+import { API_BASE_URL, getAccessToken, IS_LIVE_BACKEND } from "./api-client";
 import { getDemoDataset, mutateDataset, DEMO_CONSTANTS } from "./demo-data";
 import type { LiveEvent } from "@/stores/realtime-store";
 import type { Severity } from "./types";
@@ -26,7 +26,8 @@ function makeDemoEvent(): LiveEvent {
   const kind = randomOf(["alert", "alert", "incident", "ioc", "notification", "intel"] as const);
   const host = randomOf(DEMO_CONSTANTS.HOSTS);
   const rule = randomOf(DEMO_CONSTANTS.RULES);
-  const severity = kind === "alert" ? randomOf(SEV) : randomOf(["high", "medium", "low"] as Severity[]);
+  const severity =
+    kind === "alert" ? randomOf(SEV) : randomOf(["high", "medium", "low"] as Severity[]);
   const now = new Date().toISOString();
   const base = { id: `ev-${Date.now()}-${Math.floor(Math.random() * 999)}`, at: now, severity };
 
@@ -77,7 +78,12 @@ function makeDemoEvent(): LiveEvent {
           target.lastSeen = now;
         }
       });
-      return { ...base, kind: "ioc", message: "IOC match observed", detail: `${ioc.type.toUpperCase()} ${ioc.value}` };
+      return {
+        ...base,
+        kind: "ioc",
+        message: "IOC match observed",
+        detail: `${ioc.type.toUpperCase()} ${ioc.value}`,
+      };
     }
     case "intel":
       return {
@@ -104,7 +110,13 @@ export function connectRealtime(handlers: RealtimeHandlers): () => void {
 
     const open = () => {
       handlers.onStatus("reconnecting");
-      const url = API_BASE_URL.replace(/^http/, "ws") + "/ws";
+      const token = getAccessToken();
+      if (!token) {
+        handlers.onStatus("disconnected");
+        retry = setTimeout(open, 4000);
+        return;
+      }
+      const url = `${API_BASE_URL.replace(/^http/, "ws")}/ws?token=${encodeURIComponent(token)}`;
       socket = new WebSocket(url);
       socket.onopen = () => handlers.onStatus("connected");
       socket.onmessage = (msg) => {
