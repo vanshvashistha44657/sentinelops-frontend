@@ -32,6 +32,9 @@ export const qk = {
   auditLogs: (s: string) => ["admin", "audit", s] as const,
   sessions: ["auth", "sessions"] as const,
   activeSessions: ["admin", "active-sessions"] as const,
+  networkOverview: ["network", "overview"] as const,
+  networkDevices: (s: string) => ["network", "devices", s] as const,
+  networkSnapshots: ["network", "snapshots"] as const,
 };
 
 export const useMetrics = () =>
@@ -171,6 +174,13 @@ export function useFeedToggle() {
 
 export const useAssets = (search: string) =>
   useQuery({ queryKey: qk.assets(search), queryFn: () => services.assets.list(search) });
+
+export const useNetworkOverview = () =>
+  useQuery({ queryKey: qk.networkOverview, queryFn: () => services.network.overview(), refetchInterval: 30_000 });
+export const useNetworkDevices = (search: string) =>
+  useQuery({ queryKey: qk.networkDevices(search), queryFn: () => services.network.devices(search), refetchInterval: 30_000 });
+export const useNetworkSnapshots = () =>
+  useQuery({ queryKey: qk.networkSnapshots, queryFn: () => services.network.snapshots(), refetchInterval: 30_000 });
 
 export const useRules = (search: string) =>
   useQuery({ queryKey: qk.rules(search), queryFn: () => services.rules.list(search) });
