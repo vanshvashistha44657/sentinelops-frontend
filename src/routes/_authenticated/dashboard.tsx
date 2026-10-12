@@ -29,7 +29,7 @@ import { PageHeader, MetricCard, ChartCard, Panel } from "@/components/soc/panel
 import { CardSkeleton, ErrorState, LoadingSkeleton } from "@/components/soc/states";
 import { SeverityBadge, StatusBadge, Chip } from "@/components/soc/badges";
 import { relativeTime } from "@/components/soc/timeline";
-import { useLiveFeed, useMetrics, useSystemHealth } from "@/hooks/use-soc-data";
+import { useLiveFeed, useMetrics, useNetworkOverview, useSystemHealth } from "@/hooks/use-soc-data";
 import { useRealtimeStore } from "@/stores/realtime-store";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -72,6 +72,7 @@ function DashboardPage() {
   const { data: m, isLoading, error, refetch } = useMetrics();
   const feed = useLiveFeed();
   const health = useSystemHealth();
+  const network = useNetworkOverview();
   const events = useRealtimeStore((s) => s.events);
   const eventsSeen = useRealtimeStore((s) => s.eventsSeen);
 
@@ -87,6 +88,9 @@ function DashboardPage() {
               <Radio className="size-3" /> {eventsSeen} live events this session
             </Chip>
             <Chip tone="success">Security score {m?.securityScore ?? "—"}/100</Chip>
+            <Chip tone={network.data?.activeSensorCount ? "success" : "neutral"}>
+              {network.data?.activeSensorCount ? `${network.data.activeSensorCount} SENSOR${network.data.activeSensorCount === 1 ? "" : "S"} REPORTING` : "NO SENSOR REPORTING"}
+            </Chip>
           </>
         }
       />
@@ -205,8 +209,8 @@ function DashboardPage() {
             <Panel className="flex flex-col p-4">
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-sm font-semibold">Live event stream</h3>
-                <span className="mono flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-success">
-                  <span className="live-dot size-1.5 rounded-full bg-success" /> streaming
+                <span className={network.data?.activeSensorCount ? "mono flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-success" : "mono flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground"}>
+                  <span className={network.data?.activeSensorCount ? "live-dot size-1.5 rounded-full bg-success" : "size-1.5 rounded-full bg-muted-foreground"} /> {network.data?.activeSensorCount ? "sensor telemetry" : "waiting for sensor"}
                 </span>
               </div>
               <ScrollArea className="h-[240px] pr-2">

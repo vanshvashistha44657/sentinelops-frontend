@@ -22,6 +22,9 @@ import type {
   InvestigationCase,
   Ioc,
   NotificationItem,
+  NetworkDevice,
+  NetworkOverview,
+  NetworkSnapshot,
   Paginated,
   ReportItem,
   Role,
@@ -31,6 +34,7 @@ import type {
   ThreatActor,
   ThreatFeed,
   User,
+  Sensor,
 } from "./types";
 
 export * from "./types";
@@ -789,6 +793,23 @@ const assets = {
   },
 };
 
+/* ------------------------------------------------------ network telemetry */
+
+const network = {
+  overview(): Promise<NetworkOverview> {
+    return resolve("/network/overview", () => ({ sensors: [], devices: [], latestSnapshots: [], sensorCount: 0, activeSensorCount: 0 }));
+  },
+  sensors(): Promise<Sensor[]> {
+    return resolve("/sensors", () => []);
+  },
+  devices(search = ""): Promise<NetworkDevice[]> {
+    return resolve(`/network/devices?search=${encodeURIComponent(search)}`, () => []);
+  },
+  snapshots(): Promise<NetworkSnapshot[]> {
+    return resolve("/network/snapshots", () => []);
+  },
+};
+
 /* -------------------------------------------------------- detection rules */
 
 const rules = {
@@ -1040,6 +1061,7 @@ export const services = {
   intel,
   hunting,
   assets,
+  network,
   rules,
   reports,
   notifications,

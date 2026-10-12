@@ -46,6 +46,7 @@ import { canAccessModule, type ModuleKey } from "@/lib/rbac";
 import { NotificationCenter } from "./notification-center";
 import { Chip, type BadgeTone } from "./badges";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNetworkOverview } from "@/hooks/use-soc-data";
 import { toast } from "sonner";
 
 export const NAV_ITEMS: { to: string; label: string; icon: typeof Shield; module: ModuleKey }[] = [
@@ -114,9 +115,11 @@ function NavList({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: 
 
 function ConnectionPill() {
   const status = useRealtimeStore((s) => s.status);
-  const label = status === "connected" ? "LIVE SOC" : status === "reconnecting" ? "RECONNECTING" : "DISCONNECTED";
+  const network = useNetworkOverview();
+  const sensorActive = (network.data?.activeSensorCount ?? 0) > 0;
+  const label = status === "connected" && sensorActive ? "LIVE MONITORING" : status === "reconnecting" ? "RECONNECTING" : sensorActive ? "SENSOR ONLINE" : "NO SENSOR";
   const tone =
-    status === "connected"
+    status === "connected" && sensorActive
       ? "border-success/40 bg-success/10 text-success"
       : status === "reconnecting"
         ? "border-medium/40 bg-medium/10 text-medium"
@@ -127,7 +130,7 @@ function ConnectionPill() {
         "mono inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[10px] font-semibold tracking-[0.14em]",
         tone,
       )}
-      title={`WebSocket ${status}`}
+      title={`WebSocket ${status}; sensor ${sensorActive ? "active" : "not reporting"}`}
     >
       <span className={cn("size-1.5 rounded-full bg-current", status === "connected" && "live-dot")} />
       {label}

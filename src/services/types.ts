@@ -199,6 +199,76 @@ export interface Asset {
   alertIds: string[];
   incidentIds: string[];
   tags: string[];
+  source?: "soc" | "sensor";
+  isDemo?: boolean;
+  sensorId?: string;
+  sensorName?: string;
+  mac?: string;
+  vendor?: string | null;
+  collectionMethods?: string[];
+  services?: { port: number; protocol: string; available: boolean; method: string }[];
+}
+
+export type SensorStatus = "active" | "stale" | "never_reported" | "revoked";
+
+export interface Sensor {
+  id: string;
+  name: string;
+  hostname: string;
+  platform: string;
+  sensorVersion: string;
+  status: SensorStatus;
+  createdAt: string;
+  lastHeartbeatAt: string | null;
+  lastObservationAt: string | null;
+  lastErrorAt: string | null;
+  lastError: string | null;
+  lastIp: string;
+  heartbeatIntervalSeconds: number;
+}
+
+export interface NetworkDevice {
+  id: string;
+  sensorId: string;
+  sensorName: string;
+  ip: string;
+  mac: string;
+  hostname: string | null;
+  vendor: string | null;
+  state: string;
+  services: { port: number; protocol: string; available: boolean; method: string }[];
+  collectionMethods: string[];
+  lastSeen: string;
+  source: "sensor";
+  isDemo: false;
+}
+
+export interface NetworkSnapshot {
+  id: string;
+  sensorId: string;
+  sensorName: string;
+  observationId: string;
+  observedAt: string;
+  connection: {
+    state: string;
+    ssid: string | null;
+    bssid: string | null;
+    localIp: string | null;
+    subnet: string | null;
+    gateway: string | null;
+    dns: string[];
+    signal: Record<string, unknown>;
+  };
+  collectionMethods: string[];
+  collectionErrors: { method?: string; message: string }[];
+}
+
+export interface NetworkOverview {
+  sensors: Sensor[];
+  devices: NetworkDevice[];
+  latestSnapshots: NetworkSnapshot[];
+  sensorCount: number;
+  activeSensorCount: number;
 }
 
 export interface DetectionRule {
