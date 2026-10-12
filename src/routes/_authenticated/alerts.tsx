@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, Filter, RotateCcw, Search, Siren, UserCheck } from "lucide-react";
 import { PageHeader, KeyValue, Panel } from "@/components/soc/panels";
 import { DataTable, type Column } from "@/components/soc/data-table";
-import { SeverityBadge, StatusBadge, Chip } from "@/components/soc/badges";
+import { DemoBadge, SeverityBadge, StatusBadge, Chip } from "@/components/soc/badges";
 import { Timeline, absoluteTime, relativeTime } from "@/components/soc/timeline";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,7 +77,7 @@ function AlertsPage() {
       className: "min-w-[260px]",
       render: (r) => (
         <div className="min-w-0">
-          <p className="truncate font-medium text-foreground">{r.title}</p>
+           <div className="flex items-center gap-2"><p className="truncate font-medium text-foreground">{r.title}</p>{r.isDemo && <DemoBadge simulated={Boolean(r.rawEvent["simulation"])} />}</div>
           <p className="mono truncate text-[11px] text-muted-foreground">
             {r.id} · {r.ruleId}
           </p>
@@ -233,7 +233,8 @@ function AlertDetail({ id, onClose, canWrite }: { id: string | null; onClose: ()
               <SeverityBadge severity={alert.severity} />
               <StatusBadge status={alert.status} />
               <Chip tone="info">{alert.mitreTechnique}</Chip>
-              <span className="mono text-[11px] text-muted-foreground">{alert.id}</span>
+               {alert.isDemo && <DemoBadge simulated={Boolean(alert.rawEvent["simulation"])} />}
+               <span className="mono text-[11px] text-muted-foreground">{alert.id}</span>
             </div>
           )}
         </SheetHeader>

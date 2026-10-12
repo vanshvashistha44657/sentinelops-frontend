@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { ChevronDown, Download, FileBarChart, FileSpreadsheet, FileText, Loader2, Table2 } from "lucide-react";
 import { PageHeader, Panel } from "@/components/soc/panels";
-import { StatusBadge } from "@/components/soc/badges";
+import { DemoBadge, StatusBadge } from "@/components/soc/badges";
 import { relativeTime } from "@/components/soc/timeline";
 import { Button } from "@/components/ui/button";
 import { LoadingSkeleton, ErrorState } from "@/components/soc/states";
@@ -117,7 +117,7 @@ function ReportsPage() {
           <article key={r.id} className="panel flex flex-col p-4">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-foreground">{r.name}</p>
+                 <div className="flex items-center gap-2"><p className="truncate text-sm font-semibold text-foreground">{r.name}</p>{r.isDemo && <DemoBadge simulated={r.id === "demo-report-sqli-001"} />}</div>
                 <p className="mono truncate text-[11px] text-muted-foreground">{r.period} · {r.sizeKb} KB</p>
               </div>
               <StatusBadge status={r.status} />

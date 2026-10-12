@@ -89,3 +89,11 @@ export function Chip({
 }) {
   return <span className={cn(badge({ tone }), "normal-case tracking-normal", className)}>{children}</span>;
 }
+
+export function DemoBadge({ simulated = false }: { simulated?: boolean }) {
+  return (
+    <span className="inline-flex items-center rounded border border-primary/40 bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary">
+      {simulated ? "SIMULATED" : "DEMO"}
+    </span>
+  );
+}

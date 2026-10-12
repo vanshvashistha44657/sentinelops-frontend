@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CheckCheck } from "lucide-react";
 import { PageHeader, Panel } from "@/components/soc/panels";
-import { SeverityBadge, Chip } from "@/components/soc/badges";
+import { DemoBadge, SeverityBadge, Chip } from "@/components/soc/badges";
 import { relativeTime } from "@/components/soc/timeline";
 import { Button } from "@/components/ui/button";
 import { LoadingSkeleton, ErrorState, EmptyState } from "@/components/soc/states";
@@ -48,7 +48,7 @@ function NotificationsPage() {
             <li key={n.id} className={n.read ? "flex items-start gap-3 p-3" : "flex items-start gap-3 rounded-md bg-primary/5 p-3"}>
               <SeverityBadge severity={n.severity} />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-foreground">{n.title}</p>
+                 <p className="flex items-center gap-2 text-sm font-medium text-foreground">{n.title}{n.isDemo && <DemoBadge simulated={n.title.includes("SQL injection")} />}</p>
                 <p className="text-xs text-muted-foreground">{n.body}</p>
                 <p className="mono mt-1 text-[10px] text-muted-foreground">{n.category.replace(/_/g, " ")} · {relativeTime(n.createdAt)}</p>
               </div>

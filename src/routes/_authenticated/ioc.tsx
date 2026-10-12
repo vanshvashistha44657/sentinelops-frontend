@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Search, Trash2 } from "lucide-react";
 import { PageHeader, Panel } from "@/components/soc/panels";
 import { DataTable, type Column } from "@/components/soc/data-table";
-import { SeverityBadge, Chip } from "@/components/soc/badges";
+import { DemoBadge, SeverityBadge, Chip } from "@/components/soc/badges";
 import { relativeTime } from "@/components/soc/timeline";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,7 @@ function IocPage() {
   const columns: Column<Ioc>[] = [
     { key: "type", header: "Type", render: (r) => <Chip tone="neutral">{r.type}</Chip> },
     { key: "value", header: "Indicator", className: "min-w-[280px]", render: (r) => (
-      <div className="min-w-0"><p className="mono truncate text-xs text-foreground">{r.value}</p><p className="truncate text-[11px] text-muted-foreground">{r.description}</p></div>
+       <div className="min-w-0"><div className="flex items-center gap-2"><p className="mono truncate text-xs text-foreground">{r.value}</p>{r.isDemo && <DemoBadge simulated />}</div><p className="truncate text-[11px] text-muted-foreground">{r.description}</p></div>
     ) },
     { key: "sev", header: "Severity", render: (r) => <SeverityBadge severity={r.severity} /> },
     { key: "risk", header: "Risk", render: (r) => <span className="mono text-xs">{r.riskScore}</span>, sortable: true, sortValue: (r) => r.riskScore },
