@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { PageHeader, Panel } from "@/components/soc/panels";
 import { DataTable, type Column } from "@/components/soc/data-table";
-import { StatusBadge, Chip } from "@/components/soc/badges";
+import { DemoBadge, StatusBadge, Chip } from "@/components/soc/badges";
 import { relativeTime } from "@/components/soc/timeline";
 import { Input } from "@/components/ui/input";
 import { useAssets, useDebounced, useNetworkOverview } from "@/hooks/use-soc-data";
@@ -29,7 +29,7 @@ function AssetsPage() {
 
   const columns: Column<Asset>[] = [
     { key: "name", header: "Asset", className: "min-w-[240px]", render: (r) => (
-      <div className="min-w-0"><p className="truncate font-medium text-foreground">{r.name}</p><p className="mono truncate text-[11px] text-muted-foreground">{r.id} · {r.ip} · {r.os}</p></div>
+     <div className="min-w-0"><div className="flex items-center gap-2"><p className="truncate font-medium text-foreground">{r.name}</p>{r.isDemo && <DemoBadge simulated />}</div><p className="mono truncate text-[11px] text-muted-foreground">{r.id} · {r.ip} · {r.os}</p></div>
     ) },
     { key: "type", header: "Type", render: (r) => <Chip tone="neutral">{r.type}</Chip> },
     { key: "crit", header: "Criticality", render: (r) => <Chip tone={r.criticality === "critical" ? "critical" : r.criticality === "high" ? "high" : "neutral"}>{r.criticality}</Chip> },

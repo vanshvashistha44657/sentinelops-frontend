@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader, Panel } from "@/components/soc/panels";
-import { SeverityBadge, Chip } from "@/components/soc/badges";
+import { DemoBadge, SeverityBadge, Chip } from "@/components/soc/badges";
 import { relativeTime } from "@/components/soc/timeline";
 import { Switch } from "@/components/ui/switch";
 import { LoadingSkeleton } from "@/components/soc/states";
@@ -37,7 +37,7 @@ function IntelPage() {
             {feeds.data?.map((f) => (
               <div key={f.id} className="flex items-center justify-between rounded-md border border-border p-3">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-foreground">{f.name}</p>
+                   <div className="flex items-center gap-2"><p className="truncate text-sm font-medium text-foreground">{f.name}</p>{f.isDemo && <DemoBadge simulated />}</div>
                   <p className="mono truncate text-[11px] text-muted-foreground">{f.provider} · {f.indicators.toLocaleString()} indicators · reliability {f.reliability} · synced {relativeTime(f.lastSync)}</p>
                 </div>
                 <Switch checked={f.enabled} disabled={!canWrite} onCheckedChange={(v) => toggle.mutate({ id: f.id, enabled: v })} />
@@ -53,7 +53,7 @@ function IntelPage() {
             {matches.data?.map((m) => (
               <div key={m.id} className="flex items-center justify-between gap-2 rounded-md border border-border p-3">
                 <div className="min-w-0">
-                  <p className="mono truncate text-xs text-foreground">{m.value}</p>
+                   <div className="flex items-center gap-2"><p className="mono truncate text-xs text-foreground">{m.value}</p>{m.isDemo && <DemoBadge simulated />}</div>
                   <p className="truncate text-[11px] text-muted-foreground">{m.source} · {m.matches} matches · {relativeTime(m.lastSeen)}</p>
                 </div>
                 <SeverityBadge severity={m.severity} />
@@ -70,7 +70,7 @@ function IntelPage() {
           {actors.data?.map((a) => (
             <article key={a.id} className="rounded-md border border-border p-3">
               <div className="flex items-center justify-between gap-2">
-                <p className="truncate text-sm font-semibold text-foreground">{a.name}</p>
+                 <div className="flex items-center gap-2"><p className="truncate text-sm font-semibold text-foreground">{a.name}</p>{a.isDemo && <DemoBadge simulated />}</div>
                 <Chip tone={a.activity > 70 ? "critical" : a.activity > 40 ? "high" : "neutral"}>activity {a.activity}</Chip>
               </div>
               <p className="mono mt-0.5 truncate text-[11px] text-muted-foreground">{a.aliases.join(", ")}</p>

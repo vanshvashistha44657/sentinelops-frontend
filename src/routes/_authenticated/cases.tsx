@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { PageHeader, Panel, KeyValue } from "@/components/soc/panels";
 import { DataTable, type Column } from "@/components/soc/data-table";
-import { SeverityBadge, StatusBadge, Chip } from "@/components/soc/badges";
+import { DemoBadge, SeverityBadge, StatusBadge, Chip } from "@/components/soc/badges";
 import { Timeline, relativeTime } from "@/components/soc/timeline";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -37,7 +37,7 @@ function CasesPage() {
   const columns: Column<InvestigationCase>[] = [
     { key: "id", header: "Case", render: (r) => <span className="mono text-xs text-primary">{r.id}</span> },
     { key: "title", header: "Title", className: "min-w-[280px]", render: (r) => (
-      <div className="min-w-0"><p className="truncate font-medium text-foreground">{r.title}</p><p className="truncate text-[11px] text-muted-foreground">{r.summary}</p></div>
+       <div className="min-w-0"><div className="flex items-center gap-2"><p className="truncate font-medium text-foreground">{r.title}</p>{r.isDemo && <DemoBadge simulated />}</div><p className="truncate text-[11px] text-muted-foreground">{r.summary}</p></div>
     ) },
     { key: "severity", header: "Severity", render: (r) => <SeverityBadge severity={r.severity} /> },
     { key: "status", header: "Status", render: (r) => <StatusBadge status={r.status} />, sortable: true, sortValue: (r) => r.status },
@@ -72,7 +72,8 @@ function CaseDetail({ id, onClose, canWrite }: { id: string | null; onClose: () 
           {c && (
             <div className="flex flex-wrap items-center gap-2">
               <SeverityBadge severity={c.severity} /><StatusBadge status={c.status} />
-              <span className="mono text-[11px] text-muted-foreground">{c.id}</span>
+               {c.isDemo && <DemoBadge simulated />}
+               <span className="mono text-[11px] text-muted-foreground">{c.id}</span>
             </div>
           )}
         </SheetHeader>

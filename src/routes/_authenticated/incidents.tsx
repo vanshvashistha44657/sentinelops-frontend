@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Search, ShieldAlert } from "lucide-react";
 import { PageHeader, KeyValue, Panel, MetricCard } from "@/components/soc/panels";
 import { DataTable, type Column } from "@/components/soc/data-table";
-import { SeverityBadge, StatusBadge, Chip } from "@/components/soc/badges";
+import { DemoBadge, SeverityBadge, StatusBadge, Chip } from "@/components/soc/badges";
 import { Timeline, absoluteTime, relativeTime } from "@/components/soc/timeline";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -52,7 +52,7 @@ function IncidentsPage() {
       className: "min-w-[280px]",
       render: (r) => (
         <div className="min-w-0">
-          <p className="truncate font-medium text-foreground">{r.title}</p>
+           <div className="flex items-center gap-2"><p className="truncate font-medium text-foreground">{r.title}</p>{r.isDemo && <DemoBadge simulated />}</div>
           <p className="truncate text-[11px] text-muted-foreground">{r.summary}</p>
         </div>
       ),
@@ -129,7 +129,8 @@ function IncidentDetail({ id, onClose, canWrite }: { id: string | null; onClose:
               <SeverityBadge severity={inc.severity} />
               <StatusBadge status={inc.status} />
               <Chip tone={inc.priority === "P1" ? "critical" : "neutral"}>{inc.priority}</Chip>
-              <span className="mono text-[11px] text-muted-foreground">{inc.id}</span>
+               {inc.isDemo && <DemoBadge simulated />}
+               <span className="mono text-[11px] text-muted-foreground">{inc.id}</span>
             </div>
           )}
         </SheetHeader>

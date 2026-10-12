@@ -31,6 +31,8 @@ export interface Session {
   startedAt: string;
   lastActive: string;
   current: boolean;
+  isDemo?: boolean;
+  demoKey?: string | undefined;
 }
 
 export type AlertStatus = "new" | "investigating" | "escalated" | "false_positive" | "closed";
@@ -57,6 +59,8 @@ export interface AlertEvent {
   notes: NoteEntry[];
   timeline: TimelineEntry[];
   riskScore: number;
+  isDemo?: boolean;
+  demoKey?: string | undefined;
 }
 
 export type IncidentStatus = "open" | "investigating" | "containment" | "eradication" | "resolved";
@@ -79,6 +83,8 @@ export interface Incident {
   timeline: TimelineEntry[];
   notes: NoteEntry[];
   evidence: Evidence[];
+  isDemo?: boolean;
+  demoKey?: string | undefined;
 }
 
 export type CaseStatus = "open" | "in_progress" | "pending_review" | "closed";
@@ -106,6 +112,8 @@ export interface InvestigationCase {
   notes: NoteEntry[];
   timeline: TimelineEntry[];
   attachments: { id: string; name: string; size: string; addedAt: string }[];
+  isDemo?: boolean;
+  demoKey?: string | undefined;
 }
 
 export interface Evidence {
@@ -157,6 +165,8 @@ export interface Ioc {
   relatedAlertIds: string[];
   relatedIncidentIds: string[];
   description: string;
+  isDemo?: boolean;
+  demoKey?: string | undefined;
 }
 
 export interface ThreatFeed {
@@ -167,6 +177,8 @@ export interface ThreatFeed {
   indicators: number;
   lastSync: string;
   reliability: "A" | "B" | "C";
+  isDemo?: boolean;
+  demoKey?: string | undefined;
 }
 
 export interface ThreatActor {
@@ -180,6 +192,8 @@ export interface ThreatActor {
   techniques: string[];
   targetSectors: string[];
   summary: string;
+  isDemo?: boolean;
+  demoKey?: string | undefined;
 }
 
 export type AssetType = "server" | "endpoint" | "user" | "network" | "cloud";
@@ -286,6 +300,8 @@ export interface DetectionRule {
   falsePositiveRate: number;
   author: string;
   updatedAt: string;
+  isDemo?: boolean;
+  demoKey?: string | undefined;
 }
 
 export interface HuntResult {
@@ -300,6 +316,8 @@ export interface HuntResult {
   mitre: string;
   severity: Severity;
   matchedField: string;
+  isDemo?: boolean;
+  demoKey?: string | undefined;
 }
 
 export interface SavedHunt {
@@ -310,6 +328,8 @@ export interface SavedHunt {
   createdAt: string;
   lastRun: string;
   results: number;
+  isDemo?: boolean;
+  demoKey?: string | undefined;
 }
 
 export interface NotificationItem {
@@ -328,6 +348,8 @@ export interface NotificationItem {
   read: boolean;
   createdAt: string;
   link?: string | undefined;
+  isDemo?: boolean;
+  demoKey?: string | undefined;
 }
 
 export interface AuditLog {
@@ -340,6 +362,8 @@ export interface AuditLog {
   previousValue: string | null;
   newValue: string | null;
   result: "success" | "failure";
+  isDemo?: boolean;
+  demoKey?: string | undefined;
 }
 
 export interface ReportItem {
@@ -359,6 +383,8 @@ export interface ReportItem {
   status: "ready" | "generating" | "failed";
   sizeKb: number;
   summary: { label: string; value: string }[];
+  isDemo?: boolean;
+  demoKey?: string | undefined;
 }
 
 export interface DashboardMetrics {
@@ -434,4 +460,6 @@ export interface ActiveSession {
   device: string;
   location: string;
   current: boolean;
+  isDemo?: boolean;
+  demoKey?: string | undefined;
 }

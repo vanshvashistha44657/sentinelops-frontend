@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Play, Save } from "lucide-react";
 import { PageHeader, Panel } from "@/components/soc/panels";
 import { DataTable, type Column } from "@/components/soc/data-table";
-import { SeverityBadge, Chip } from "@/components/soc/badges";
+import { DemoBadge, SeverityBadge, Chip } from "@/components/soc/badges";
 import { relativeTime } from "@/components/soc/timeline";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +37,7 @@ function HuntingPage() {
   const columns: Column<HuntResult>[] = [
     { key: "ts", header: "Time", render: (r) => <span className="mono text-[11px] text-muted-foreground">{relativeTime(r.timestamp)}</span> },
     { key: "sev", header: "Severity", render: (r) => <SeverityBadge severity={r.severity} /> },
-    { key: "host", header: "Host", render: (r) => <span className="mono text-xs">{r.host}</span> },
+     { key: "host", header: "Host", render: (r) => <span className="flex items-center gap-2"><span className="mono text-xs">{r.host}</span>{r.isDemo && <DemoBadge simulated />}</span> },
     { key: "user", header: "User", render: (r) => <span className="mono text-xs">{r.user}</span> },
     { key: "proc", header: "Process", render: (r) => <span className="mono text-xs">{r.process}</span> },
     { key: "cmd", header: "Command line", className: "min-w-[320px]", render: (r) => <span className="mono block max-w-[420px] truncate text-[11px] text-muted-foreground">{r.commandLine}</span> },
@@ -90,7 +90,7 @@ function HuntingPage() {
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
           {saved.data?.map((h) => (
             <button key={h.id} className="rounded-md border border-border p-3 text-left transition-colors hover:border-primary/40" onClick={() => setValue(h.query.split('"')[1] ?? "")}>
-              <p className="truncate text-sm font-medium text-foreground">{h.name}</p>
+               <p className="flex items-center gap-2 truncate text-sm font-medium text-foreground">{h.name}{h.isDemo && <DemoBadge simulated />}</p>
               <p className="mono truncate text-[11px] text-muted-foreground">{h.query}</p>
               <p className="mono mt-1 text-[10px] text-muted-foreground">{h.createdBy} · {h.results} results · {relativeTime(h.lastRun)}</p>
             </button>

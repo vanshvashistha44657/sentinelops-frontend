@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { PageHeader, Panel } from "@/components/soc/panels";
 import { DataTable, type Column } from "@/components/soc/data-table";
-import { SeverityBadge, Chip } from "@/components/soc/badges";
+import { DemoBadge, SeverityBadge, Chip } from "@/components/soc/badges";
 import { relativeTime } from "@/components/soc/timeline";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -40,7 +40,7 @@ function RulesPage() {
       </span>
     ) },
     { key: "name", header: "Rule", className: "min-w-[300px]", render: (r) => (
-      <div className="min-w-0"><p className="truncate font-medium text-foreground">{r.name}</p><p className="mono truncate text-[11px] text-muted-foreground">{r.id} · {r.source}</p></div>
+       <div className="min-w-0"><div className="flex items-center gap-2"><p className="truncate font-medium text-foreground">{r.name}</p>{r.isDemo && <DemoBadge simulated />}</div><p className="mono truncate text-[11px] text-muted-foreground">{r.id} · {r.source}</p></div>
     ) },
     { key: "sev", header: "Severity", render: (r) => <SeverityBadge severity={r.severity} /> },
     { key: "mitre", header: "MITRE", render: (r) => <Chip tone="info">{r.mitre}</Chip> },
@@ -68,7 +68,8 @@ function RulesPage() {
               <div className="flex flex-wrap items-center gap-2">
                 <SeverityBadge severity={selected.severity} />
                 <Chip tone="info">{selected.mitre} · {selected.mitreName}</Chip>
-                <span className="mono text-[11px] text-muted-foreground">{selected.id}</span>
+                 {selected.isDemo && <DemoBadge simulated />}
+                 <span className="mono text-[11px] text-muted-foreground">{selected.id}</span>
               </div>
             )}
           </SheetHeader>
